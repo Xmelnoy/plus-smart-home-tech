@@ -51,7 +51,7 @@ public class HubEventServiceImpl implements HubEventService {
 
     private void addDevice(String hubId, DeviceAddedEventAvro e) {
         String sensorId = e.getId().toString();
-        Sensor sensor = sensorRepository.findById(Long.valueOf(sensorId))
+        Sensor sensor = sensorRepository.findById(sensorId)
                 .map(existing -> {
                     existing.setHubId(hubId);
                     return existing;

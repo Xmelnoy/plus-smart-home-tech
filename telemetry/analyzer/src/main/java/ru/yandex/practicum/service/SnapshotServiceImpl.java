@@ -5,18 +5,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.yandex.practicum.grpc.HubRouterClient;
-import ru.yandex.practicum.model.enm.ActionType;
-import ru.yandex.practicum.model.enm.ConditionType;
-import ru.yandex.practicum.model.entity.Action;
-import ru.yandex.practicum.model.entity.Condition;
-import ru.yandex.practicum.model.entity.Scenario;
-import ru.yandex.practicum.model.entity.Sensor;
-import ru.yandex.practicum.model.entity.scenario.ScenarioAction;
-import ru.yandex.practicum.model.entity.scenario.ScenarioCondition;
-import ru.yandex.practicum.repository.ScenarioRepository;
 import ru.yandex.practicum.grpc.telemetry.event.ActionTypeProto;
 import ru.yandex.practicum.grpc.telemetry.event.DeviceActionProto;
 import ru.yandex.practicum.kafka.telemetry.event.*;
+import ru.yandex.practicum.model.enm.ActionType;
+import ru.yandex.practicum.model.enm.ConditionType;
+import ru.yandex.practicum.model.entity.*;
+import ru.yandex.practicum.model.entity.scenario.ScenarioAction;
+import ru.yandex.practicum.model.entity.scenario.ScenarioCondition;
+import ru.yandex.practicum.repository.ScenarioRepository;
 
 import java.util.HashMap;
 import java.util.List;
@@ -34,7 +31,7 @@ public class SnapshotServiceImpl implements SnapshotService {
     @Transactional(readOnly = true)
     public void analyzeSnapshot(SensorsSnapshotAvro snapshot) {
         String hubId = snapshot.getHubId().toString();
-        log.debug("Analyzing snapshot for hub: {}", hubId);
+        log.info("Analyzing snapshot for hub: {}", hubId);
 
         List<Scenario> scenarios = scenarioRepository.findByHubId(hubId);
         if (scenarios.isEmpty()) {
@@ -49,22 +46,22 @@ public class SnapshotServiceImpl implements SnapshotService {
             if (checkScenario(scenario, sensorsState)) {
                 log.info("Scenario '{}' matched for hub {}", scenario.getName(), hubId);
                 executeActions(scenario, hubId, sensorsState);
+            } else {
+                log.debug("Scenario '{}' did not match", scenario.getName());
             }
         }
     }
 
     private boolean checkScenario(Scenario scenario, Map<String, SensorStateAvro> sensorsState) {
         for (ScenarioCondition sc : scenario.getConditions()) {
-            Sensor sensor = sc.getSensor();
-            Condition condition = sc.getCondition();
+            String sensorId = sc.getSensor().getId();
+            SensorStateAvro state = sensorsState.get(sensorId);
 
-            SensorStateAvro state = sensorsState.get(sensor.getId());
             if (state == null) {
-                log.debug("Sensor {} not found in snapshot", sensor.getId());
+                log.debug("Sensor {} not found in snapshot", sensorId);
                 return false;
             }
-
-            if (!checkCondition(condition, state)) {
+            if (!checkCondition(sc.getCondition(), state)) {
                 return false;
             }
         }
@@ -72,25 +69,23 @@ public class SnapshotServiceImpl implements SnapshotService {
     }
 
     private boolean checkCondition(Condition condition, SensorStateAvro state) {
-        Object data = state.getData();
-        Integer actualValue = extractValue(data, condition.getType());
+        Integer actual = extractValue(state.getData(), condition.getType());
+        Integer expected = condition.getValue();
 
-        if (actualValue == null) {
-            log.debug("Cannot extract value for condition type {}", condition.getType());
+        if (actual == null || expected == null) {
+            log.debug("Cannot compare: actual={}, expected={}", actual, expected);
             return false;
         }
 
-        Integer expectedValue = condition.getValue();
-        if (expectedValue == null) {
-            log.debug("Condition value is null");
-            return false;
-        }
-
-        return switch (condition.getOperation()) {
-            case EQUALS -> actualValue.equals(expectedValue);
-            case GREATER_THAN -> actualValue > expectedValue;
-            case LOWER_THAN -> actualValue < expectedValue;
+        boolean result = switch (condition.getOperation()) {
+            case EQUALS -> actual.equals(expected);
+            case GREATER_THAN -> actual > expected;
+            case LOWER_THAN -> actual < expected;
         };
+
+        log.debug("Condition check: type={}, actual={}, op={}, expected={} -> {}",
+                condition.getType(), actual, condition.getOperation(), expected, result);
+        return result;
     }
 
     private Integer extractValue(Object sensorData, ConditionType type) {
@@ -99,15 +94,20 @@ public class SnapshotServiceImpl implements SnapshotService {
                 if (sensorData instanceof TemperatureSensorAvro t) {
                     yield t.getTemperatureC();
                 }
+                if (sensorData instanceof ClimateSensorAvro c) {
+                    yield c.getTemperatureC();
+                }
                 yield null;
             }
-            case HUMIDITY, CO2LEVEL -> {
+            case HUMIDITY -> {
                 if (sensorData instanceof ClimateSensorAvro c) {
-                    yield switch (type) {
-                        case HUMIDITY -> c.getHumidity();
-                        case CO2LEVEL -> c.getCo2Level();
-                        default -> null;
-                    };
+                    yield c.getHumidity();
+                }
+                yield null;
+            }
+            case CO2LEVEL -> {
+                if (sensorData instanceof ClimateSensorAvro c) {
+                    yield c.getCo2Level();
                 }
                 yield null;
             }
@@ -137,16 +137,21 @@ public class SnapshotServiceImpl implements SnapshotService {
             Sensor sensor = sa.getSensor();
             Action action = sa.getAction();
 
-            DeviceActionProto protoAction = DeviceActionProto.newBuilder()
+            DeviceActionProto.Builder builder = DeviceActionProto.newBuilder()
                     .setSensorId(sensor.getId())
-                    .setType(convertActionType(action.getType()))
-                    .setValue(action.getValue())
-                    .build();
+                    .setType(convertActionType(action.getType()));
+
+            if (action.getValue() != null) {
+                builder.setValue(action.getValue());
+            }
 
             try {
-                hubRouterClient.sendDeviceAction(hubId, scenario.getName(), protoAction);
+                hubRouterClient.sendDeviceAction(hubId, scenario.getName(), builder.build());
+                log.info("Device action sent: hub={}, scenario={}, sensor={}, type={}",
+                        hubId, scenario.getName(), sensor.getId(), action.getType());
             } catch (Exception e) {
-                log.error("Failed to execute action for scenario '{}': {}", scenario.getName(), e.getMessage());
+                log.error("Failed to execute action for scenario '{}': {}",
+                        scenario.getName(), e.getMessage());
             }
         }
     }
