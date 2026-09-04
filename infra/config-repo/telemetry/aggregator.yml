@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: aggregator
+  kafka:
+    bootstrap-servers: localhost:9092
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
+kafka:
+  consumer:
+    group-id: aggregator
+  topics:
+    sensors: telemetry.sensors.v1
+    hubs: telemetry.hubs.v1
+    snapshots: telemetry.snapshots.v1
+
+logging:
+  level:
+    ru.yandex.practicum.aggregator: DEBUG
+    org.apache.kafka: WARN
+
+server:
+  shutdown: graceful

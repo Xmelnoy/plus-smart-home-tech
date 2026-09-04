@@ -1,0 +1,59 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: analyzer
+
+  # Database
+  datasource:
+    url: "jdbc:postgresql://localhost:5432/telemetry_analyzer"
+    username: dbuser
+    password: 12345
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 5
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    open-in-view: false
+
+  sql:
+    init:
+      mode: always
+      schema-locations: "classpath:schema.sql"
+      continue-on-error: false
+
+  # Kafka
+  kafka:
+    bootstrap-servers: localhost:9092
+
+# Custom Kafka properties
+kafka:
+  consumer:
+    snapshot:
+      group-id: analyzer-snapshot
+    hub:
+      group-id: analyzer-hub
+  topics:
+    snapshots: telemetry.snapshots.v1
+    hubs: telemetry.hubs.v1
+
+# gRPC Client Hub Router
+grpc:
+  client:
+    hub-router:
+      address: "static://localhost:59090"
+      enableKeepAlive: true
+      keepAliveWithoutCalls: true
+      negotiationType: plaintext
+
+# Logging
+logging:
+  level:
+    ru.yandex.practicum.analyzer: DEBUG
+    org.springframework.jdbc: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.apache.kafka: WARN
