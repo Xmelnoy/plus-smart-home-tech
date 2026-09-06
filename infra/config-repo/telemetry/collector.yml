@@ -1,32 +1,12 @@
-  grpc:
-    server:
-    port: 59091
-    
-    # Kafka
-    spring:
-      kafka:
-        bootstrap-servers: localhost:9092
-    kafka:
-      topics:
-        sensors: telemetry.sensors.v1
-        hubs: telemetry.hubs.v1
-    
-    # Logging
-    logging:
-      level:
-        org:
-          apache:
-            kafka=WARN:
-        ru:
-          yandex:
-            practicum:
-              telemetry:
-                collector: DEBUG
-
-
-
+grpc:
   server:
-    servlet:
-      encoding:
-        charset: UTF-8
-        enabled: true
+    port: 59091
+
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+
+kafka:
+  topics:
+    sensors: telemetry.sensors.v1
+    hubs: telemetry.hubs.v1

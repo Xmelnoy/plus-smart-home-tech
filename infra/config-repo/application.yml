@@ -9,6 +9,12 @@ logging:
     org:
       springframework: ERROR
       apache.kafka: WARN
+      hibernate.SQL: DEBUG
 
 kafka:
   bootstrap-servers: "localhost:9092"
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
