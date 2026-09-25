@@ -16,6 +16,8 @@
         <module>inventory-service</module>
         <module>order-service</module>
         <module>product-service</module>
+        <module>commerce-api</module>
+        <module>commerce-api</module>
     </modules>
 
 </project>
