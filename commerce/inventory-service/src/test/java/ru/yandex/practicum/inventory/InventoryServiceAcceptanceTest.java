@@ -9,8 +9,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import ru.yandex.practicum.inventory.dto.ReserveRequest;
-import ru.yandex.practicum.inventory.dto.UpdateInventoryRequest;
+import ru.yandex.practicum.commerce.api.inventory.UpdateInventoryRequest;
+import ru.yandex.practicum.commerce.api.inventory.ReserveRequest;
 
 import java.util.Map;
 

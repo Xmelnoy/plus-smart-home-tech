@@ -1,7 +1,7 @@
 package ru.yandex.practicum.order.feign;
 
-import inventory.ReserveRequest;
-import inventory.ReserveResponse;
+import ru.yandex.practicum.commerce.api.inventory.ReserveRequest;
+import ru.yandex.practicum.commerce.api.inventory.ReserveResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

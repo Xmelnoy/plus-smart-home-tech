@@ -1,4 +1,4 @@
-package order;
+package ru.yandex.practicum.commerce.api.order;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;

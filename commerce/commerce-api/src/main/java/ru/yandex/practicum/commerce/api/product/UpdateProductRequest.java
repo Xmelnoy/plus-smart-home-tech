@@ -1,4 +1,4 @@
-package product;
+package ru.yandex.practicum.commerce.api.product;
 
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Size;

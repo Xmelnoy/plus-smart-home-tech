@@ -1,4 +1,4 @@
-package inventory;
+package ru.yandex.practicum.commerce.api.inventory;
 
 public record InventoryDto(
 
