@@ -9,6 +9,7 @@ public enum OrderStatus {
 
     CREATED("Заказ создан и ожидает обработки"),
     CONFIRMED("Заказ подтверждён, товары зарезервированы"),
+    PENDING_CONFIRMATION("Заказ принят, но требует проверки"),
     CANCELLED("Заказ отменён"),
     COMPLETED("Заказ выполнен");
 
