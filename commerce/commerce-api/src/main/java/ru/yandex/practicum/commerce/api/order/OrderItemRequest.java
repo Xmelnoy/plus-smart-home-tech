@@ -1,9 +1,9 @@
-package ru.yandex.practicum.inventory.dto;
+package ru.yandex.practicum.commerce.api.order;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
-public record ReserveRequest(
+public record OrderItemRequest(
 
         @NotNull(message = "ID товара обязателен")
         Long productId,
