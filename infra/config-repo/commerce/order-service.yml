@@ -11,13 +11,33 @@ spring:
   jpa:
     hibernate:
       ddl-auto: validate
-      show-sql: false
-      open-in-view: false
+    show-sql: false
+    open-in-view: false
+
   sql:
     init:
       mode: always
       schema-locations: classpath:schema.sql
       continue-on-error: false
+
+  cloud:
+    openfeign:
+      client:
+        config:
+          default:
+            connectTimeout: 5000
+            readTimeout: 10000
+            loggerLevel: BASIC
+          inventory-service:
+            connectTimeout: 3000
+            readTimeout: 5000
+
+    loadbalancer:
+      retry:
+        enabled: true
+        max-retries-on-same-service-instance: 0
+        max-retries-on-next-service-instance: 2
+        retry-on-all-exceptions: true
 
 server:
   port: 0
@@ -34,18 +54,6 @@ management:
     web:
       exposure:
         include: health,info
-
-  cloud:
-    openfeign:
-      client:
-        config:
-          default:
-            connectTimeout: 5000
-            readTimeout: 10000
-            loggerLevel: BASIC
-          inventory-service:
-            connectTimeout: 3000
-            readTimeout: 5000
 
 logging:
   level:
