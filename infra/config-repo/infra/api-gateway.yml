@@ -1,52 +1,51 @@
+server:
+  port: 8080
+
+app:
+  security:
+    users:
+      - username: ivan
+        password: "{bcrypt}$2a$10$EqKcp1WFKVQISheBxMdyoOKy6rRjPM5v6yGkOw8wJzB6vQrHv2pGy"
+        roles:
+          - USER
+      - username: anna
+        password: "{bcrypt}$2a$10$rD4yM5yYxQ7K9e4JQwZJQOe4JQwZJQe4JQwZJQe4JQwZJQe4JQwZJQe4JQwZJ"
+        roles:
+          - USER
+          - ADMIN
+
 spring:
   cloud:
     gateway:
       discovery:
         locator:
           enabled: false
-
       routes:
-
-        - id: product-service
+        - id: product-service-products
           uri: lb://product-service
           predicates:
-            - Path=/api/products,/api/products/**
-          filters:
-            - name: Retry
-              args:
-                retries: 2
-                statuses:
-                  - BAD_GATEWAY
-                  - SERVICE_UNAVAILABLE
-                  - GATEWAY_TIMEOUT
-                methods:
-                  - GET
-                backoff:
-                  firstBackoff: 100ms
-                  maxBackoff: 500ms
+            - Path=/api/products/**
 
-        - id: category-service
+        - id: product-service-categories
           uri: lb://product-service
           predicates:
-            - Path=/api/categories,/api/categories/**
-          filters:
-            - name: Retry
-              args:
-                retries: 2
-                statuses:
-                  - BAD_GATEWAY
-                  - SERVICE_UNAVAILABLE
-                  - GATEWAY_TIMEOUT
-                methods:
-                  - GET
-                backoff:
-                  firstBackoff: 100ms
-                  maxBackoff: 500ms
+            - Path=/api/categories/**
 
         - id: inventory-service
           uri: lb://inventory-service
           predicates:
-            - Path=/api/inventory,/api/inventory/**
+            - Path=/api/inventory/**
+
+        - id: order-service
+          uri: lb://order-service
+          predicates:
+            - Path=/api/orders/**
+
+        - id: product-service-read
+          uri: lb://product-service
+          predicates:
+            - Path=/api/products/**,/api/categories/**
+            - Method=GET
           filters:
             - name: Retry
               args:
@@ -61,10 +60,11 @@ spring:
                   firstBackoff: 100ms
                   maxBackoff: 500ms
 
-        - id: order-service
-          uri: lb://order-service
+        - id: inventory-service-read
+          uri: lb://inventory-service
           predicates:
-            - Path=/api/orders,/api/orders/**
+            - Path=/api/inventory/**
+            - Method=GET
           filters:
             - name: Retry
               args:
@@ -78,3 +78,44 @@ spring:
                 backoff:
                   firstBackoff: 100ms
                   maxBackoff: 500ms
+
+        - id: order-service-read
+          uri: lb://order-service
+          predicates:
+            - Path=/api/orders/**
+            - Method=GET
+          filters:
+            - name: Retry
+              args:
+                retries: 2
+                statuses:
+                  - BAD_GATEWAY
+                  - SERVICE_UNAVAILABLE
+                  - GATEWAY_TIMEOUT
+                methods:
+                  - GET
+                backoff:
+                  firstBackoff: 100ms
+                  maxBackoff: 500ms
+
+      globalcors:
+        add-to-simple-url-handler-mapping: true
+        cors-configurations:
+          '[/**]':
+            allowed-origins:
+              - http://localhost:3000
+              - http://localhost:5173
+              - http://localhost:8443
+            allowed-methods:
+              - GET
+              - POST
+              - PUT
+              - PATCH
+              - DELETE
+              - OPTIONS
+            allowed-headers:
+              - '*'
+            exposed-headers:
+              - Location
+            allow-credentials: true
+            max-age: 3600
