@@ -1,0 +1,17 @@
+package ru.yandex.practicum.order.entity;
+
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+
+@Getter
+@RequiredArgsConstructor
+public enum OrderStatus {
+
+    CREATED("Заказ создан и ожидает обработки"),
+    CONFIRMED("Заказ подтверждён, товары зарезервированы"),
+    PENDING_CONFIRMATION("Заказ принят, но требует проверки"),
+    CANCELLED("Заказ отменён"),
+    COMPLETED("Заказ выполнен");
+
+    private final String description;
+}
